@@ -12,33 +12,48 @@ class ArchivesScreen extends StatelessWidget {
         title: const Text('Archives'),
         automaticallyImplyLeading: false,
       ),
-      body: RefreshIndicator(
-        onRefresh: () => Provider.of<TopicProvider>(context, listen: false).fetchTopics(force: true),
-        child: Consumer<TopicProvider>(
-          builder: (context, topicProvider, child) {
-            if (topicProvider.status == TopicStatus.loading && topicProvider.resolvedTopics.isEmpty) {
-              return const Center(child: CircularProgressIndicator());
-            } else if (topicProvider.status == TopicStatus.error) {
-              return Center(child: Text('Error: ${topicProvider.errorMessage}'));
-            } else if (topicProvider.resolvedTopics.isEmpty) {
-              return const Center(child: Text('No archived topics found.'));
-            } else {
-              return ListView.builder(
-                itemCount: topicProvider.resolvedTopics.length,
-                itemBuilder: (context, index) {
-                  final topic = topicProvider.resolvedTopics[index];
-                  return ListTile(
-                    title: Text(topic.encryptedContent), // Assuming content is not actually encrypted for now
-                    subtitle: Text('Resolved on: ${topic.resolvedAt}'),
+      body: Consumer<TopicProvider>(
+        builder: (context, provider, child) {
+          if (provider.status == TopicStatus.loading && provider.allTopics.isEmpty) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (provider.status == TopicStatus.error) {
+            return Center(child: Text(provider.errorMessage ?? 'An error occurred'));
+          } else if (provider.resolvedTopics.isEmpty) {
+            return const Center(child: Text('No resolved topics.'));
+          }
+
+          return RefreshIndicator(
+            onRefresh: () => provider.fetchTopics(force: true),
+            child: ListView.builder(
+              padding: const EdgeInsets.all(8.0),
+              itemCount: provider.resolvedTopics.length,
+              itemBuilder: (context, index) {
+                final topic = provider.resolvedTopics[index];
+                return Card(
+                  elevation: 2.0,
+                  margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.all(16.0),
+                    title: Text(
+                      topic.encryptedContent,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            decoration: TextDecoration.lineThrough,
+                          ),
+                    ),
+                    subtitle: Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Text('Importance: ${topic.importanceLevel}'),
+                    ),
                     onTap: () {
                       // TODO: Navigate to topic details
                     },
-                  );
-                },
-              );
-            }
-          },
-        ),
+                  ),
+                );
+              },
+            ),
+          );
+        },
       ),
     );
   }

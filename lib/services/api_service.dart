@@ -180,12 +180,12 @@ class ApiService {
     }
   }
 
-  Future<Map<String, dynamic>> getTopic(int topicId) async {
+  Future<Map<String, dynamic>> getTopic(String id) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('api_token');
 
     final response = await http.get(
-      Uri.parse('$_baseUrl/topics/$topicId'),
+      Uri.parse('$_baseUrl/topics/$id'),
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
@@ -195,7 +195,30 @@ class ApiService {
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {
-      throw Exception('Failed to load topic');
+      throw Exception('Failed to load topic details');
+    }
+  }
+
+  Future<Map<String, dynamic>> createTopic(String encryptedContent, int importanceLevel) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('api_token');
+
+    final response = await http.post(
+      Uri.parse('$_baseUrl/topics'),
+      headers: {
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(<String, dynamic>{
+        'encrypted_content': encryptedContent,
+        'importance_level': importanceLevel,
+      }),
+    );
+
+    if (response.statusCode == 201) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to create topic: ${response.body}');
     }
   }
 }
