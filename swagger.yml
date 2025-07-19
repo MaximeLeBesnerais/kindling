@@ -39,14 +39,14 @@ components:
     MiniUser:
       type: object
       properties:
-        ID:
+        id:
           type: integer
           format: uint
           readOnly: true
-        Username:
+        username:
           type: string
           description: "The user's username, with a random 4-character tag appended after a # (e.g., `username#1234`)"
-        Email:
+        email:
           type: string
           readOnly: true
     Space:
@@ -251,7 +251,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/MiniUser"
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/MiniUser'
         "401":
           description: Unauthorized
           content:

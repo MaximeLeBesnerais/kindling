@@ -1,8 +1,42 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../services/api_service.dart';
 import '../../theme/theme_manager.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends StatefulWidget {
+  @override
+  _SettingsScreenState createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  final ApiService _apiService = ApiService();
+  String _email = '';
+  String _username = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _email = prefs.getString('email') ?? '';
+      _username = prefs.getString('username') ?? '';
+    });
+    try {
+      final userData = await _apiService.getUser();
+      setState(() {
+        _email = userData['user']['email'];
+        _username = userData['user']['username'];
+      });
+    } catch (e) {
+      // Handle error
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final themeManager = Provider.of<ThemeManager>(context);
@@ -17,6 +51,21 @@ class SettingsScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Text('Account', style: Theme.of(context).textTheme.titleLarge),
+            SizedBox(height: 10),
+            Text('Email: $_email'),
+            SizedBox(height: 10),
+            Text('Username: $_username'),
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _showChangeUsernameDialog,
+              child: Text('Change Username'),
+            ),
+            ElevatedButton(
+              onPressed: _showChangePasswordDialog,
+              child: Text('Change Password'),
+            ),
+            SizedBox(height: 20),
             Text('Theme Color', style: Theme.of(context).textTheme.titleLarge),
             SizedBox(height: 10),
             _buildThemeSelector(themeManager),
@@ -27,6 +76,114 @@ class SettingsScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  void _showChangeUsernameDialog() {
+    final _newUsernameController = TextEditingController();
+    final _passwordController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Change Username'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: _newUsernameController,
+                decoration: InputDecoration(labelText: 'New Username'),
+              ),
+              TextField(
+                controller: _passwordController,
+                decoration: InputDecoration(labelText: 'Password'),
+                obscureText: true,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final newUsername = _newUsernameController.text;
+                final password = _passwordController.text;
+                if (newUsername.isNotEmpty && password.isNotEmpty) {
+                  try {
+                    await _apiService.updateUsername(newUsername, password);
+                    Navigator.of(context).pop();
+                    _loadUserData();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Username updated successfully')),
+                    );
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Failed to update username: $e')),
+                    );
+                  }
+                }
+              },
+              child: Text('Update'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showChangePasswordDialog() {
+    final _currentPasswordController = TextEditingController();
+    final _newPasswordController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Change Password'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: _currentPasswordController,
+                decoration: InputDecoration(labelText: 'Current Password'),
+                obscureText: true,
+              ),
+              TextField(
+                controller: _newPasswordController,
+                decoration: InputDecoration(labelText: 'New Password'),
+                obscureText: true,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final currentPassword = _currentPasswordController.text;
+                final newPassword = _newPasswordController.text;
+                if (currentPassword.isNotEmpty && newPassword.isNotEmpty) {
+                  try {
+                    await _apiService.updatePassword(currentPassword, newPassword);
+                    Navigator.of(context).pop();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Password updated successfully')),
+                    );
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Failed to update password: $e')),
+                    );
+                  }
+                }
+              },
+              child: Text('Update'),
+            ),
+          ],
+        );
+      },
     );
   }
 

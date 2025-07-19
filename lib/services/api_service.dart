@@ -1,4 +1,3 @@
-
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -90,6 +89,75 @@ class ApiService {
       return data;
     } else {
       throw Exception('Failed to join space');
+    }
+  }
+
+  Future<Map<String, dynamic>> getUser() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('api_token');
+
+    final response = await http.get(
+      Uri.parse('$_baseUrl/users/me'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      await prefs.setString('email', data['Email']);
+      await prefs.setString('username', data['Username']);
+      return data;
+    } else {
+      throw Exception('Failed to get user data');
+    }
+  }
+
+  Future<Map<String, dynamic>> updateUsername(String newUsername, String password) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('api_token');
+
+    final response = await http.patch(
+      Uri.parse('$_baseUrl/users/me/username'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'username': newUsername,
+        'password': password,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      await prefs.setString('username', data['username']);
+      return data;
+    } else {
+      throw Exception('Failed to update username');
+    }
+  }
+
+  Future<void> updatePassword(String currentPassword, String newPassword) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('api_token');
+
+    final response = await http.patch(
+      Uri.parse('$_baseUrl/users/me/password'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'current_password': currentPassword,
+        'new_password': newPassword,
+      }),
+    );
+
+    if (response.statusCode != 200) {
+      final error = jsonDecode(response.body);
+      throw Exception('Failed to update password: ${error['error']}');
     }
   }
 }
