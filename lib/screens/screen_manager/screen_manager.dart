@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kindling/screens/archive/archives_screen.dart';
 import 'package:kindling/screens/topic/topics_screen.dart';
-import '../archive/archive_screen.dart';
 import '../settings/settings_screen.dart';
 
 class ScreenManager extends StatefulWidget {
