@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:kindling/screens/archive/archives_screen.dart';
+import 'package:kindling/screens/topic/topics_screen.dart';
 import '../archive/archive_screen.dart';
-import '../topic/topic_screen.dart';
 import '../settings/settings_screen.dart';
 
 class ScreenManager extends StatefulWidget {
@@ -14,8 +15,8 @@ class _ScreenManagerState extends State<ScreenManager> {
   int _selectedIndex = 1; // Start with TopicScreen (center)
 
   final List<Widget> _screens = [
-    ArchiveScreen(),
-    TopicScreen(),
+    ArchivesScreen(),
+    TopicsScreen(),
     SettingsScreen(),
   ];
 
