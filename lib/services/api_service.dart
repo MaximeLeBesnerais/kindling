@@ -62,6 +62,7 @@ class ApiService {
       final data = jsonDecode(response.body);
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('space_secret', data['qr_code_secret']);
+      await prefs.setBool('is_in_space', true);
       return data;
     } else {
       throw Exception('Failed to create space');
@@ -69,26 +70,68 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> joinSpace(String secret) async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('api_token');
-
+    final token = await getToken();
     final response = await http.post(
       Uri.parse('$baseUrl/spaces/join'),
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': 'Bearer $token',
       },
-      body: jsonEncode({
-        'qr_code_secret': secret,
-      }),
+      body: jsonEncode(<String, String>{'qr_code_secret': secret}),
     );
 
     if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      await prefs.setString('space_id', data['space_id'].toString());
-      return data;
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('is_in_space', true);
+      return jsonDecode(response.body);
     } else {
       throw Exception('Failed to join space');
+    }
+  }
+
+  Future<String?> getSpaceSecret() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('space_secret');
+  }
+
+  Future<void> quitSpace() async {
+    final token = await getToken();
+    final response = await http.delete(
+      Uri.parse('$baseUrl/spaces/quit'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode == 200) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('space_secret');
+      await prefs.setBool('is_in_space', false);
+    } else {
+      throw Exception('Failed to quit space: ${response.body}');
+    }
+  }
+
+  Future<bool> isInSpace() async {
+    final prefs = await SharedPreferences.getInstance();
+    bool? inSpace = prefs.getBool('is_in_space');
+
+    if (inSpace != null) {
+      return inSpace;
+    }
+
+    final token = await getToken();
+    final response = await http.get(
+      Uri.parse('$baseUrl/spaces/me'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode == 200) {
+      inSpace = jsonDecode(response.body) as bool;
+      await prefs.setBool('is_in_space', inSpace);
+      return inSpace;
+    } else {
+      // If the endpoint fails, we assume they are not in a space to be safe
+      await prefs.setBool('is_in_space', false);
+      return false;
     }
   }
 
@@ -262,28 +305,6 @@ class ApiService {
   Future<String> getPartnerName() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('partner_name') ?? 'Partner';
-  }
-
-  Future<String?> getSpaceSecret() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('space_secret');
-  }
-
-  Future<void> quitSpace() async {
-    final token = await getToken();
-    final response = await http.delete(
-      Uri.parse('$baseUrl/spaces/quit'),
-      headers: {'Authorization': 'Bearer $token'},
-    );
-
-    if (response.statusCode == 200) {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove('space_secret');
-      // Also clear topics as they are space-specific
-      // This assumes you have a way to clear topics in your TopicProvider
-    } else {
-      throw Exception('Failed to quit space: ${response.body}');
-    }
   }
 
   Future<void> logout() async {

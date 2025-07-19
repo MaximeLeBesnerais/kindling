@@ -12,14 +12,14 @@ class ThemeManager with ChangeNotifier {
       : _lightTheme = ThemeData(useMaterial3: true),
         _darkTheme = ThemeData.dark(useMaterial3: true),
         _themeMode = ThemeMode.system {
-    _loadTheme();
+    loadTheme();
   }
 
   ThemeData get lightTheme => _lightTheme;
   ThemeData get darkTheme => _darkTheme;
   ThemeMode get themeMode => _themeMode;
 
-  void _loadTheme() {
+  void loadTheme() {
     final colorName = prefs.getString('theme_color');
     final themeModeName = prefs.getString('theme_mode');
 
