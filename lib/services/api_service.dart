@@ -160,4 +160,42 @@ class ApiService {
       throw Exception('Failed to update password: ${error['error']}');
     }
   }
+
+  Future<List<dynamic>> getTopics() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('api_token');
+
+    final response = await http.get(
+      Uri.parse('$_baseUrl/topics'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to load topics');
+    }
+  }
+
+  Future<Map<String, dynamic>> getTopic(int topicId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('api_token');
+
+    final response = await http.get(
+      Uri.parse('$_baseUrl/topics/$topicId'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to load topic');
+    }
+  }
 }

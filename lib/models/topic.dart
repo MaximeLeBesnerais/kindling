@@ -1,4 +1,3 @@
-
 class Topic {
   final String id;
   final String spaceId;
@@ -19,4 +18,17 @@ class Topic {
     required this.createdAt,
     this.resolvedAt,
   });
+
+  factory Topic.fromJson(Map<String, dynamic> json) {
+    return Topic(
+      id: json['ID'].toString(),
+      spaceId: json['SpaceID'].toString(),
+      authorId: json['AuthorID'].toString(),
+      encryptedContent: json['EncryptedContent'],
+      status: json['Status'],
+      importanceLevel: json['ImportanceLevel'],
+      createdAt: DateTime.parse(json['CreatedAt']),
+      resolvedAt: json['ResolvedAt'] != null ? DateTime.parse(json['ResolvedAt']) : null,
+    );
+  }
 }
