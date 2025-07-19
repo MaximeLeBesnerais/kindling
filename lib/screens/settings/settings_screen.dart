@@ -46,35 +46,62 @@ class _SettingsScreenState extends State<SettingsScreen> {
         title: Text('Settings'),
         automaticallyImplyLeading: false,
       ),
-      body: Padding(
+      body: ListView(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Account', style: Theme.of(context).textTheme.titleLarge),
-            SizedBox(height: 10),
-            Text('Email: $_email'),
-            SizedBox(height: 10),
-            Text('Username: $_username'),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _showChangeUsernameDialog,
-              child: Text('Change Username'),
+        children: [
+          Card(
+            elevation: 4,
+            margin: const EdgeInsets.symmetric(vertical: 10),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Account', style: Theme.of(context).textTheme.titleLarge),
+                  SizedBox(height: 20),
+                  Text('Email: $_email', style: Theme.of(context).textTheme.titleMedium),
+                  SizedBox(height: 10),
+                  Text('Username: $_username', style: Theme.of(context).textTheme.titleMedium),
+                  SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      ElevatedButton(
+                        onPressed: _showChangeUsernameDialog,
+                        child: Text('Change Username'),
+                      ),
+                      ElevatedButton(
+                        onPressed: _showChangePasswordDialog,
+                        child: Text('Change Password'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-            ElevatedButton(
-              onPressed: _showChangePasswordDialog,
-              child: Text('Change Password'),
+          ),
+          Card(
+            elevation: 4,
+            margin: const EdgeInsets.symmetric(vertical: 10),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Theme', style: Theme.of(context).textTheme.titleLarge),
+                  SizedBox(height: 20),
+                  Text('Color', style: Theme.of(context).textTheme.titleMedium),
+                  SizedBox(height: 10),
+                  _buildThemeSelector(themeManager),
+                  SizedBox(height: 20),
+                  Text('Mode', style: Theme.of(context).textTheme.titleMedium),
+                  SizedBox(height: 10),
+                  _buildThemeModeSelector(context, themeManager),
+                ],
+              ),
             ),
-            SizedBox(height: 20),
-            Text('Theme Color', style: Theme.of(context).textTheme.titleLarge),
-            SizedBox(height: 10),
-            _buildThemeSelector(themeManager),
-            SizedBox(height: 20),
-            Text('Theme Mode', style: Theme.of(context).textTheme.titleLarge),
-            SizedBox(height: 10),
-            _buildThemeModeSelector(context, themeManager),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -200,6 +227,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildThemeCircle(ThemeManager themeManager, Color color) {
+    final isSelected = themeManager.lightTheme.colorScheme.primary == color ||
+        (themeManager.lightTheme.colorScheme.primary.value == color.value &&
+            themeManager.lightTheme.colorScheme.brightness == Brightness.light);
+
+    // A better way to check for selection
+    final currentSeedColor = themeManager.lightTheme.colorScheme.primary;
+    bool isActuallySelected = false;
+    if (color == Colors.blue && currentSeedColor.value == Colors.blue.value) isActuallySelected = true;
+    if (color == Colors.pink && currentSeedColor.value == Colors.pink.value) isActuallySelected = true;
+    if (color == Colors.green && currentSeedColor.value == Colors.green.value) isActuallySelected = true;
+    if (color == Colors.orange && currentSeedColor.value == Colors.orange.value) isActuallySelected = true;
+
+    final selectedColorName = themeManager.prefs.getString('theme_color');
+    isActuallySelected = selectedColorName == _getColorName(color);
+
     return GestureDetector(
       onTap: () => themeManager.setTheme(color),
       child: Container(
@@ -208,13 +250,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
         decoration: BoxDecoration(
           color: color,
           shape: BoxShape.circle,
-          border: Border.all(
-            color: themeManager.lightTheme.primaryColor == color ? Colors.white : Colors.transparent,
-            width: 3,
-          ),
         ),
+        child: isActuallySelected
+            ? Icon(Icons.check, color: Colors.white)
+            : null,
       ),
     );
+  }
+
+  String _getColorName(Color color) {
+    if (color == Colors.blue) return 'blue';
+    if (color == Colors.pink) return 'pink';
+    if (color == Colors.green) return 'green';
+    if (color == Colors.orange) return 'orange';
+    return 'blue';
   }
 
   Widget _buildThemeModeSelector(BuildContext context, ThemeManager themeManager) {

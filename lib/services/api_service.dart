@@ -106,8 +106,8 @@ class ApiService {
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      await prefs.setString('email', data['Email']);
-      await prefs.setString('username', data['Username']);
+      await prefs.setString('email', data['user']['email']);
+      await prefs.setString('username', data['user']['username']);
       return data;
     } else {
       throw Exception('Failed to get user data');
