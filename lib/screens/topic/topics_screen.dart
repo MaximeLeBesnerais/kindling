@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:kindling/providers/topic_provider.dart';
 import 'package:kindling/screens/topic/create_topic_screen.dart';
+import 'package:kindling/screens/topic/topic_detail_screen.dart';
 import 'package:provider/provider.dart';
 
 class TopicsScreen extends StatelessWidget {
@@ -55,7 +56,11 @@ class TopicsScreen extends StatelessWidget {
                       child: Text('Importance: ${topic.importanceLevel}'),
                     ),
                     onTap: () {
-                      // TODO: Navigate to topic details
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => TopicDetailScreen(topic: topic),
+                        ),
+                      );
                     },
                   ),
                 );

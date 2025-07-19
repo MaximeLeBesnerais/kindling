@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:kindling/providers/topic_provider.dart';
+import 'package:kindling/screens/auth/auth_screen.dart';
 import 'package:provider/provider.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/api_service.dart';
 import '../../theme/theme_manager.dart';
@@ -13,11 +16,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final ApiService _apiService = ApiService();
   String _email = '';
   String _username = '';
+  String _partnerName = '';
 
   @override
   void initState() {
     super.initState();
     _loadUserData();
+    _loadPartnerName();
   }
 
   Future<void> _loadUserData() async {
@@ -35,6 +40,91 @@ class _SettingsScreenState extends State<SettingsScreen> {
     } catch (e) {
       // Handle error
     }
+  }
+
+  Future<void> _loadPartnerName() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _partnerName = prefs.getString('partner_name') ?? '';
+    });
+  }
+
+  void _showSecretDialog() async {
+    final secret = await _apiService.getSpaceSecret();
+    if (mounted && secret != null) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Space Secret'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Share this secret with your partner to let them join your space.'),
+              const SizedBox(height: 20),
+              QrImageView(
+                data: secret,
+                version: QrVersions.auto,
+                size: 200.0,
+              ),
+              const SizedBox(height: 20),
+              SelectableText(secret),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Close'),
+            ),
+          ],
+        ),
+      );
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No secret found. Are you in a space?')),
+      );
+    }
+  }
+
+  void _showChangePartnerNameDialog() {
+    final controller = TextEditingController(text: _partnerName);
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Change Partner Name'),
+          content: TextField(
+            controller: controller,
+            decoration: InputDecoration(labelText: 'Partner Name'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final newPartnerName = controller.text;
+                if (newPartnerName.isNotEmpty) {
+                  try {
+                    await _apiService.setPartnerName(newPartnerName); // Corrected to use local storage
+                    Navigator.of(context).pop();
+                    _loadPartnerName();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Partner name updated successfully')),
+                    );
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Failed to update partner name: $e')),
+                    );
+                  }
+                }
+              },
+              child: Text('Update'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -62,9 +152,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   Text('Email: $_email', style: Theme.of(context).textTheme.titleMedium),
                   SizedBox(height: 10),
                   Text('Username: $_username', style: Theme.of(context).textTheme.titleMedium),
+                  SizedBox(height: 10),
+                  Text('Partner Name: $_partnerName', style: Theme.of(context).textTheme.titleMedium),
                   SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  Wrap(
+                    spacing: 8.0,
+                    runSpacing: 8.0,
+                    alignment: WrapAlignment.center,
                     children: [
                       ElevatedButton(
                         onPressed: _showChangeUsernameDialog,
@@ -73,6 +167,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ElevatedButton(
                         onPressed: _showChangePasswordDialog,
                         child: Text('Change Password'),
+                      ),
+                      ElevatedButton(
+                        onPressed: _showChangePartnerNameDialog,
+                        child: Text('Change Partner Name'),
                       ),
                     ],
                   ),
@@ -101,14 +199,84 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
           ),
+          const SizedBox(height: 20),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.vpn_key),
+              title: const Text('Display Secret'),
+              onTap: _showSecretDialog,
+            ),
+          ),
+          Card(
+            child: ListTile(
+              leading: Icon(Icons.exit_to_app, color: Colors.red),
+              title: Text('Quit Space', style: TextStyle(color: Colors.red)),
+              onTap: () async {
+                final shouldQuit = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Quit Space?'),
+                    content: const Text('Are you sure you want to quit your current space? This action cannot be undone.'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(false),
+                        child: const Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(true),
+                        child: const Text('Quit'),
+                      ),
+                    ],
+                  ),
+                );
+
+                if (shouldQuit == true) {
+                  try {
+                    await _apiService.quitSpace();
+                    Provider.of<TopicProvider>(context, listen: false).clearTopics();
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('You have left the space.')),
+                      );
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Failed to quit space: $e')),
+                      );
+                    }
+                  }
+                }
+              },
+            ),
+          ),
         ],
+      ),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: ElevatedButton(
+          onPressed: () async {
+            await _apiService.logout();
+            if (mounted) {
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (context) => const AuthScreen()),
+                (route) => false,
+              );
+            }
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.red,
+            foregroundColor: Colors.white,
+          ),
+          child: const Text('Logout'),
+        ),
       ),
     );
   }
 
   void _showChangeUsernameDialog() {
-    final _newUsernameController = TextEditingController();
-    final _passwordController = TextEditingController();
+    final newUsernameController = TextEditingController();
+    final passwordController = TextEditingController();
     showDialog(
       context: context,
       builder: (context) {
@@ -118,11 +286,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
-                controller: _newUsernameController,
+                controller: newUsernameController,
                 decoration: InputDecoration(labelText: 'New Username'),
               ),
               TextField(
-                controller: _passwordController,
+                controller: passwordController,
                 decoration: InputDecoration(labelText: 'Password'),
                 obscureText: true,
               ),
@@ -135,8 +303,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             ElevatedButton(
               onPressed: () async {
-                final newUsername = _newUsernameController.text;
-                final password = _passwordController.text;
+                final newUsername = newUsernameController.text;
+                final password = passwordController.text;
                 if (newUsername.isNotEmpty && password.isNotEmpty) {
                   try {
                     await _apiService.updateUsername(newUsername, password);
@@ -161,8 +329,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _showChangePasswordDialog() {
-    final _currentPasswordController = TextEditingController();
-    final _newPasswordController = TextEditingController();
+    final currentPasswordController = TextEditingController();
+    final newPasswordController = TextEditingController();
     showDialog(
       context: context,
       builder: (context) {
@@ -172,12 +340,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
-                controller: _currentPasswordController,
+                controller: currentPasswordController,
                 decoration: InputDecoration(labelText: 'Current Password'),
                 obscureText: true,
               ),
               TextField(
-                controller: _newPasswordController,
+                controller: newPasswordController,
                 decoration: InputDecoration(labelText: 'New Password'),
                 obscureText: true,
               ),
@@ -190,8 +358,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             ElevatedButton(
               onPressed: () async {
-                final currentPassword = _currentPasswordController.text;
-                final newPassword = _newPasswordController.text;
+                final currentPassword = currentPasswordController.text;
+                final newPassword = newPasswordController.text;
                 if (currentPassword.isNotEmpty && newPassword.isNotEmpty) {
                   try {
                     await _apiService.updatePassword(currentPassword, newPassword);
@@ -227,9 +395,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildThemeCircle(ThemeManager themeManager, Color color) {
-    final isSelected = themeManager.lightTheme.colorScheme.primary == color ||
-        (themeManager.lightTheme.colorScheme.primary.value == color.value &&
-            themeManager.lightTheme.colorScheme.brightness == Brightness.light);
 
     // A better way to check for selection
     final currentSeedColor = themeManager.lightTheme.colorScheme.primary;

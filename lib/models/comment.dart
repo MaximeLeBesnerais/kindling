@@ -1,4 +1,3 @@
-
 class Comment {
   final String id;
   final String topicId;
@@ -13,4 +12,14 @@ class Comment {
     required this.encryptedContent,
     required this.createdAt,
   });
+
+  factory Comment.fromJson(Map<String, dynamic> json) {
+    return Comment(
+      id: json['ID'].toString(),
+      topicId: json['TopicID'].toString(),
+      authorId: json['AuthorID'].toString(),
+      encryptedContent: json['EncryptedContent'],
+      createdAt: DateTime.parse(json['CreatedAt']),
+    );
+  }
 }

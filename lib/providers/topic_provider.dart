@@ -42,4 +42,11 @@ class TopicProvider with ChangeNotifier {
       notifyListeners();
     });
   }
+
+  void clearTopics() {
+    _topics = [];
+    _status = TopicStatus.initial;
+    _errorMessage = null;
+    notifyListeners();
+  }
 }

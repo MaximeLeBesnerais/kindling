@@ -3,11 +3,16 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
-  final String _baseUrl = 'http://localhost:8080'; // As per swagger.yml
+  static const String baseUrl = 'http://localhost:8080';
+
+  Future<String?> getToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('api_token');
+  }
 
   Future<Map<String, dynamic>> register(String email, String username, String password) async {
     final response = await http.post(
-      Uri.parse('$_baseUrl/users/register'),
+      Uri.parse('$baseUrl/users/register'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'email': email,
@@ -28,7 +33,7 @@ class ApiService {
 
   Future<Map<String, dynamic>> login(String login, String password) async {
     final response = await http.post(
-      Uri.parse('$_baseUrl/users/login'),
+      Uri.parse('$baseUrl/users/login'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'login': login,
@@ -47,39 +52,34 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> createSpace() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('api_token');
-
+    final token = await getToken();
     final response = await http.post(
-      Uri.parse('$_baseUrl/spaces/create'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
+      Uri.parse('$baseUrl/spaces/create'),
+      headers: {'Authorization': 'Bearer $token'},
     );
 
     if (response.statusCode == 201) {
       final data = jsonDecode(response.body);
-      await prefs.setString('space_id', data['space_id'].toString());
-      await prefs.setString('qr_code_secret', data['qr_code_secret']);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('space_secret', data['qr_code_secret']);
       return data;
     } else {
       throw Exception('Failed to create space');
     }
   }
 
-  Future<Map<String, dynamic>> joinSpace(String qrCodeSecret) async {
+  Future<Map<String, dynamic>> joinSpace(String secret) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('api_token');
 
     final response = await http.post(
-      Uri.parse('$_baseUrl/spaces/join'),
+      Uri.parse('$baseUrl/spaces/join'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
       },
       body: jsonEncode({
-        'qr_code_secret': qrCodeSecret,
+        'qr_code_secret': secret,
       }),
     );
 
@@ -93,24 +93,22 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> getUser() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('api_token');
-
+    final token = await getToken();
     final response = await http.get(
-      Uri.parse('$_baseUrl/users/me'),
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      },
+      Uri.parse('$baseUrl/users/me'),
+      headers: {'Authorization': 'Bearer $token'},
     );
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      await prefs.setString('email', data['user']['email']);
-      await prefs.setString('username', data['user']['username']);
-      return data;
+      final user = data['user'];
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('user_email', user['email']);
+      await prefs.setString('user_username', user['username']);
+      await prefs.setString('user_id', user['id'].toString());
+      return user; // Return the user map
     } else {
-      throw Exception('Failed to get user data');
+      throw Exception('Failed to load user');
     }
   }
 
@@ -119,7 +117,7 @@ class ApiService {
     final token = prefs.getString('api_token');
 
     final response = await http.patch(
-      Uri.parse('$_baseUrl/users/me/username'),
+      Uri.parse('$baseUrl/users/me/username'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
@@ -144,7 +142,7 @@ class ApiService {
     final token = prefs.getString('api_token');
 
     final response = await http.patch(
-      Uri.parse('$_baseUrl/users/me/password'),
+      Uri.parse('$baseUrl/users/me/password'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
@@ -166,7 +164,7 @@ class ApiService {
     final token = prefs.getString('api_token');
 
     final response = await http.get(
-      Uri.parse('$_baseUrl/topics'),
+      Uri.parse('$baseUrl/topics'),
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
@@ -185,7 +183,7 @@ class ApiService {
     final token = prefs.getString('api_token');
 
     final response = await http.get(
-      Uri.parse('$_baseUrl/topics/$id'),
+      Uri.parse('$baseUrl/topics/$id'),
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
@@ -204,7 +202,7 @@ class ApiService {
     final token = prefs.getString('api_token');
 
     final response = await http.post(
-      Uri.parse('$_baseUrl/topics'),
+      Uri.parse('$baseUrl/topics'),
       headers: {
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': 'Bearer $token',
@@ -220,5 +218,76 @@ class ApiService {
     } else {
       throw Exception('Failed to create topic: ${response.body}');
     }
+  }
+
+  Future<List<dynamic>> getComments(String topicId) async {
+    final token = await getToken();
+    final response = await http.get(
+      Uri.parse('$baseUrl/topics/$topicId/comments'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to load comments');
+    }
+  }
+
+  Future<Map<String, dynamic>> createComment(String topicId, String content) async {
+    final token = await getToken();
+    final response = await http.post(
+      Uri.parse('$baseUrl/topics/$topicId/comments'),
+      headers: {
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(<String, String>{
+        'encrypted_content': content,
+      }),
+    );
+
+    if (response.statusCode == 201) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to create comment: ${response.body}');
+    }
+  }
+
+  Future<void> setPartnerName(String name) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('partner_name', name);
+  }
+
+  Future<String> getPartnerName() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('partner_name') ?? 'Partner';
+  }
+
+  Future<String?> getSpaceSecret() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('space_secret');
+  }
+
+  Future<void> quitSpace() async {
+    final token = await getToken();
+    final response = await http.delete(
+      Uri.parse('$baseUrl/spaces/quit'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode == 200) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('space_secret');
+      // Also clear topics as they are space-specific
+      // This assumes you have a way to clear topics in your TopicProvider
+    } else {
+      throw Exception('Failed to quit space: ${response.body}');
+    }
+  }
+
+  Future<void> logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
   }
 }
