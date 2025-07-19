@@ -1,0 +1,583 @@
+openapi: 3.0.0
+info:
+  title: Kindling API
+  description: API for the Kindling application, a simple, secure messaging app for two users.
+  version: "1.0.0"
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    User:
+      type: object
+      properties:
+        ID:
+          type: integer
+          format: uint
+          readOnly: true
+        Email:
+          type: string
+        Username:
+          type: string
+        Password:
+          type: string
+          format: password
+        ApiToken:
+          type: string
+          readOnly: true
+        CreatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+    Space:
+      type: object
+      properties:
+        ID:
+          type: integer
+          format: uint
+          readOnly: true
+        User1ID:
+          type: integer
+          format: uint
+        User2ID:
+          type: integer
+          format: uint
+          nullable: true
+        Status:
+          type: string
+          enum: [active, read-only]
+        CreatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+    Topic:
+      type: object
+      properties:
+        ID:
+          type: integer
+          format: uint
+          readOnly: true
+        SpaceID:
+          type: integer
+          format: uint
+          readOnly: true
+        AuthorID:
+          type: integer
+          format: uint
+          readOnly: true
+        EncryptedContent:
+          type: string
+        Status:
+          type: string
+          enum: [active, resolved]
+        ImportanceLevel:
+          type: integer
+          default: 0
+        CreatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+        ResolvedAt:
+          type: string
+          format: date-time
+          nullable: true
+          readOnly: true
+    Comment:
+      type: object
+      properties:
+        ID:
+          type: integer
+          format: uint
+          readOnly: true
+        TopicID:
+          type: integer
+          format: uint
+          readOnly: true
+        AuthorID:
+          type: integer
+          format: uint
+          readOnly: true
+        EncryptedContent:
+          type: string
+        CreatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+
+paths:
+  /users/register:
+    post:
+      summary: Register a new user
+      description: Creates a new user and returns a unique API token for them.
+      tags:
+        - User
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                username:
+                  type: string
+                password:
+                  type: string
+              required:
+                - email
+                - username
+                - password
+      responses:
+        "201":
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user_id:
+                    type: integer
+                  username:
+                    type: string
+                  api_token:
+                    type: string
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /users/login:
+    post:
+      summary: Login a user
+      description: Authenticates a user and returns an API token.
+      tags:
+        - User
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                login:
+                  type: string
+                  description: Email or username
+                password:
+                  type: string
+              required:
+                - login
+                - password
+      responses:
+        "200":
+          description: User logged in successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  api_token:
+                    type: string
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /users/me/username:
+    patch:
+      summary: Update username
+      description: Updates the username of the authenticated user.
+      tags:
+        - User
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+                  description: Current password for verification
+              required:
+                - username
+                - password
+      responses:
+        "200":
+          description: Username updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  username:
+                    type: string
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "500":
+          description: Internal Server Error
+
+  /users/me/password:
+    patch:
+      summary: Update password
+      description: Updates the password of the authenticated user.
+      tags:
+        - User
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                current_password:
+                  type: string
+                new_password:
+                  type: string
+              required:
+                - current_password
+                - new_password
+      responses:
+        "200":
+          description: Password updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "500":
+          description: Internal Server Error
+
+
+
+  /spaces/create:
+    post:
+      summary: Create a new space
+      description: Creates a new communication space for the authenticated user.
+      tags:
+        - Space
+      security:
+        - BearerAuth: []
+      responses:
+        "201":
+          description: Space created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  space_id:
+                    type: integer
+                  qr_code_secret:
+                    type: string
+        "401":
+          description: Unauthorized
+        "409":
+          description: Conflict (user is already in a space)
+        "500":
+          description: Internal Server Error
+
+  /spaces/join:
+    post:
+      summary: Join an existing space
+      description: Allows a second user to join a space using a one-time secret.
+      tags:
+        - Space
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                qr_code_secret:
+                  type: string
+              required:
+                - qr_code_secret
+      responses:
+        "200":
+          description: Joined space successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  space_id:
+                    type: integer
+        "400":
+          description: Bad Request (e.g., validation error, cannot join own space)
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found (e.g., invalid secret)
+        "409":
+          description: Conflict (e.g., space is full or user is already in a space)
+        "500":
+          description: Internal Server Error
+
+  /spaces/quit:
+    delete:
+      summary: Quit the current space
+      description: Allows a user to leave their current space. If the user is the last one in the space, the space will be deleted. Otherwise, the space will become read-only.
+      tags:
+        - Space
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Successfully left the space
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden (user is not part of this space)
+        "404":
+          description: Not Found (space not found)
+        "500":
+          description: Internal Server Error
+
+  /topics:
+    get:
+      summary: List topics
+      description: Retrieves all topics for the user's current space.
+      tags:
+        - Topics
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: A list of topics
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Topic"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden (user not in a space)
+    post:
+      summary: Create a new topic
+      description: Creates a new topic within the user's space.
+      tags:
+        - Topics
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                encrypted_content:
+                  type: string
+                importance_level:
+                  type: integer
+                  default: 0
+              required:
+                - encrypted_content
+      responses:
+        "201":
+          description: Topic created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Topic"
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+
+  /topics/{id}:
+    patch:
+      summary: Update a topic
+      description: Updates the status of a topic (e.g., to "resolved").
+      tags:
+        - Topics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [active, resolved]
+                importance_level:
+                  type: integer
+              required:
+                - status
+      responses:
+        "200":
+          description: Topic updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Topic"
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+    delete:
+      summary: Delete a topic
+      description: Deletes a topic. Only the author of the topic can perform this action.
+      tags:
+        - Topics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Topic deleted successfully
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden (not author or topic not found)
+
+  /topics/{topic_id}/comments:
+    get:
+      summary: List comments for a topic
+      description: Retrieves all comments for a specific topic within the user's space.
+      tags:
+        - Comments
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: topic_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: A list of comments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Comment"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found (topic not in space)
+    post:
+      summary: Create a new comment
+      description: Adds a comment to a specific topic. Limited to 4 comments per topic per author, with a maximum of 256 characters per comment.
+      tags:
+        - Comments
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: topic_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                encrypted_content:
+                  type: string
+                  maxLength: 256
+              required:
+                - encrypted_content
+      responses:
+        "201":
+          description: Comment created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Comment"
+        "400":
+          description: Bad Request (e.g., char limit exceeded)
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden (e.g., comment limit reached)
+        "404":
+          description: Not Found (topic not in space)
