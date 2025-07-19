@@ -23,8 +23,8 @@ class MyApp extends StatelessWidget {
         builder: (context, themeManager, child) {
           return MaterialApp(
             title: 'Kindling',
-            theme: themeManager.themeData.copyWith(brightness: Brightness.light),
-            darkTheme: themeManager.themeData.copyWith(brightness: Brightness.dark),
+            theme: themeManager.lightTheme,
+            darkTheme: themeManager.darkTheme,
             themeMode: themeManager.themeMode,
             home: AuthScreen(),
           );

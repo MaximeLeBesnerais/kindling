@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../theme/theme_manager.dart';
@@ -53,7 +52,7 @@ class SettingsScreen extends StatelessWidget {
           color: color,
           shape: BoxShape.circle,
           border: Border.all(
-            color: themeManager.themeData.primaryColor == color ? Colors.white : Colors.transparent,
+            color: themeManager.lightTheme.primaryColor == color ? Colors.white : Colors.transparent,
             width: 3,
           ),
         ),

@@ -4,16 +4,19 @@ import 'package:shared_preferences/shared_preferences.dart';
 class ThemeManager with ChangeNotifier {
   final SharedPreferences prefs;
 
-  ThemeData _themeData;
+  ThemeData _lightTheme;
+  ThemeData _darkTheme;
   ThemeMode _themeMode;
 
   ThemeManager(this.prefs)
-      : _themeData = ThemeData(),
+      : _lightTheme = ThemeData(useMaterial3: true),
+        _darkTheme = ThemeData.dark(useMaterial3: true),
         _themeMode = ThemeMode.system {
     _loadTheme();
   }
 
-  ThemeData get themeData => _themeData;
+  ThemeData get lightTheme => _lightTheme;
+  ThemeData get darkTheme => _darkTheme;
   ThemeMode get themeMode => _themeMode;
 
   void _loadTheme() {
@@ -22,24 +25,35 @@ class ThemeManager with ChangeNotifier {
 
     final themeColor = _getColor(colorName);
     _themeMode = _getThemeMode(themeModeName);
-    _themeData = _buildTheme(themeColor);
+    _lightTheme = _buildTheme(themeColor);
+    _darkTheme = _buildDarkTheme(themeColor);
 
     notifyListeners();
   }
 
   ThemeData _buildTheme(Color color) {
     return ThemeData(
-      primarySwatch: _getMaterialColor(color),
-      primaryColor: color,
-      buttonTheme: ButtonThemeData(
-        buttonColor: color,
-        textTheme: ButtonTextTheme.primary,
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: color,
+        brightness: Brightness.light,
       ),
+      useMaterial3: true,
+    );
+  }
+
+  ThemeData _buildDarkTheme(Color color) {
+    return ThemeData(
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: color,
+        brightness: Brightness.dark,
+      ),
+      useMaterial3: true,
     );
   }
 
   void setTheme(Color color) {
-    _themeData = _buildTheme(color);
+    _lightTheme = _buildTheme(color);
+    _darkTheme = _buildDarkTheme(color);
     prefs.setString('theme_color', _getColorName(color));
     notifyListeners();
   }
@@ -81,24 +95,5 @@ class ThemeManager with ChangeNotifier {
     if (color == Colors.green) return 'green';
     if (color == Colors.orange) return 'orange';
     return 'blue';
-  }
-
-  MaterialColor _getMaterialColor(Color color) {
-    if (color is MaterialColor) {
-      return color;
-    }
-    final shades = <int, Color>{
-      50: color.withOpacity(0.1),
-      100: color.withOpacity(0.2),
-      200: color.withOpacity(0.3),
-      300: color.withOpacity(0.4),
-      400: color.withOpacity(0.5),
-      500: color.withOpacity(0.6),
-      600: color.withOpacity(0.7),
-      700: color.withOpacity(0.8),
-      800: color.withOpacity(0.9),
-      900: color,
-    };
-    return MaterialColor(color.value, shades);
   }
 }
