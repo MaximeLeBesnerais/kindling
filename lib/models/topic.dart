@@ -28,4 +28,16 @@ class Topic {
       resolvedAt: json['ResolvedAt'] != null ? DateTime.parse(json['ResolvedAt']) : null,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'ID': id,
+      'AuthorID': authorId,
+      'EncryptedContent': encryptedContent,
+      'Status': status,
+      'ImportanceLevel': importanceLevel,
+      'CreatedAt': createdAt.toIso8601String(),
+      'ResolvedAt': resolvedAt?.toIso8601String(),
+    };
+  }
 }

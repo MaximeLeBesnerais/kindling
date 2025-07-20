@@ -220,24 +220,26 @@ class SettingsScreenState extends State<SettingsScreen> {
                   SizedBox(height: 10),
                   Text('Partner Name: $_partnerName', style: Theme.of(context).textTheme.titleMedium),
                   SizedBox(height: 20),
-                  Wrap(
-                    spacing: 8.0,
-                    runSpacing: 8.0,
-                    alignment: WrapAlignment.center,
-                    children: [
-                      ElevatedButton(
-                        onPressed: _showChangeUsernameDialog,
-                        child: Text('Change Username'),
-                      ),
-                      ElevatedButton(
-                        onPressed: _showChangePasswordDialog,
-                        child: Text('Change Password'),
-                      ),
-                      ElevatedButton(
-                        onPressed: _showChangePartnerNameDialog,
-                        child: Text('Change Partner Name'),
-                      ),
-                    ],
+                  Center(
+                    child: Wrap(
+                      spacing: 8.0,
+                      runSpacing: 8.0,
+                      alignment: WrapAlignment.center,
+                      children: [
+                        ElevatedButton(
+                          onPressed: _showChangeUsernameDialog,
+                          child: Text('Change Username'),
+                        ),
+                        ElevatedButton(
+                          onPressed: _showChangePasswordDialog,
+                          child: Text('Change Password'),
+                        ),
+                        ElevatedButton(
+                          onPressed: _showChangePartnerNameDialog,
+                          child: Text('Change Partner Name'),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),

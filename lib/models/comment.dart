@@ -22,4 +22,14 @@ class Comment {
       createdAt: DateTime.parse(json['CreatedAt']),
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'ID': id,
+      'TopicID': topicId,
+      'AuthorID': authorId,
+      'EncryptedContent': encryptedContent,
+      'CreatedAt': createdAt.toIso8601String(),
+    };
+  }
 }
