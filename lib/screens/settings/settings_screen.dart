@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:kindling/providers/topic_provider.dart';
 import 'package:kindling/screens/auth/auth_screen.dart';
+import 'package:kindling/screens/onboarding/space_choice_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -8,11 +9,13 @@ import '../../services/api_service.dart';
 import '../../theme/theme_manager.dart';
 
 class SettingsScreen extends StatefulWidget {
+  const SettingsScreen({super.key});
+
   @override
-  _SettingsScreenState createState() => _SettingsScreenState();
+  SettingsScreenState createState() => SettingsScreenState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> {
+class SettingsScreenState extends State<SettingsScreen> {
   final ApiService _apiService = ApiService();
   String _email = '';
   String _username = '';
@@ -47,6 +50,48 @@ class _SettingsScreenState extends State<SettingsScreen> {
     setState(() {
       _partnerName = prefs.getString('partner_name') ?? '';
     });
+  }
+
+  void _showApiUrlDialog() {
+    final controller = TextEditingController();
+    _apiService.getBaseUrl().then((value) => controller.text = value);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Set API Base URL'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(hintText: 'http://localhost:8080'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              try {
+                await _apiService.setBaseUrl(controller.text);
+                if (mounted) {
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('API URL updated successfully!')),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error: $e')),
+                  );
+                }
+              }
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showSecretDialog() async {
@@ -202,6 +247,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 20),
           Card(
             child: ListTile(
+              leading: const Icon(Icons.settings_ethernet),
+              title: const Text('Set API URL'),
+              onTap: _showApiUrlDialog,
+            ),
+          ),
+          Card(
+            child: ListTile(
               leading: const Icon(Icons.vpn_key),
               title: const Text('Display Secret'),
               onTap: _showSecretDialog,
@@ -235,8 +287,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     await _apiService.quitSpace();
                     Provider.of<TopicProvider>(context, listen: false).clearTopics();
                     if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('You have left the space.')),
+                      Navigator.of(context).pushAndRemoveUntil(
+                        MaterialPageRoute(builder: (context) => SpaceChoiceScreen()),
+                        (route) => false,
                       );
                     }
                   } catch (e) {

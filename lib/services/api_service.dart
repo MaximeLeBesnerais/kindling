@@ -3,7 +3,20 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://localhost:8080';
+  Future<String> getBaseUrl() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('api_base_url') ?? 'http://localhost:8080';
+  }
+
+  Future<void> setBaseUrl(String url) async {
+    final prefs = await SharedPreferences.getInstance();
+    // A simple check to prevent malformed URLs
+    if (Uri.tryParse(url)?.isAbsolute ?? false) {
+      await prefs.setString('api_base_url', url);
+    } else {
+      throw Exception('Invalid URL format');
+    }
+  }
 
   Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
@@ -11,6 +24,7 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> register(String email, String username, String password) async {
+    final baseUrl = await getBaseUrl();
     final response = await http.post(
       Uri.parse('$baseUrl/users/register'),
       headers: {'Content-Type': 'application/json'},
@@ -32,6 +46,7 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> login(String login, String password) async {
+    final baseUrl = await getBaseUrl();
     final response = await http.post(
       Uri.parse('$baseUrl/users/login'),
       headers: {'Content-Type': 'application/json'},
@@ -52,6 +67,7 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> createSpace() async {
+    final baseUrl = await getBaseUrl();
     final token = await getToken();
     final response = await http.post(
       Uri.parse('$baseUrl/spaces/create'),
@@ -70,6 +86,7 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> joinSpace(String secret) async {
+    final baseUrl = await getBaseUrl();
     final token = await getToken();
     final response = await http.post(
       Uri.parse('$baseUrl/spaces/join'),
@@ -95,6 +112,7 @@ class ApiService {
   }
 
   Future<void> quitSpace() async {
+    final baseUrl = await getBaseUrl();
     final token = await getToken();
     final response = await http.delete(
       Uri.parse('$baseUrl/spaces/quit'),
@@ -118,6 +136,7 @@ class ApiService {
       return inSpace;
     }
 
+    final baseUrl = await getBaseUrl();
     final token = await getToken();
     final response = await http.get(
       Uri.parse('$baseUrl/spaces/me'),
@@ -137,6 +156,7 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> getUser() async {
+    final baseUrl = await getBaseUrl();
     final token = await getToken();
     final response = await http.get(
       Uri.parse('$baseUrl/users/me'),
@@ -157,6 +177,7 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> updateUsername(String newUsername, String password) async {
+    final baseUrl = await getBaseUrl();
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('api_token');
 
@@ -182,6 +203,7 @@ class ApiService {
   }
 
   Future<void> updatePassword(String currentPassword, String newPassword) async {
+    final baseUrl = await getBaseUrl();
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('api_token');
 
@@ -204,6 +226,7 @@ class ApiService {
   }
 
   Future<List<dynamic>> getTopics() async {
+    final baseUrl = await getBaseUrl();
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('api_token');
 
@@ -223,6 +246,7 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> getTopic(String id) async {
+    final baseUrl = await getBaseUrl();
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('api_token');
 
@@ -242,6 +266,7 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> createTopic(String encryptedContent, int importanceLevel) async {
+    final baseUrl = await getBaseUrl();
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('api_token');
 
@@ -265,6 +290,7 @@ class ApiService {
   }
 
   Future<List<dynamic>> getComments(String topicId) async {
+    final baseUrl = await getBaseUrl();
     final token = await getToken();
     final response = await http.get(
       Uri.parse('$baseUrl/topics/$topicId/comments'),
@@ -279,6 +305,7 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> createComment(String topicId, String content) async {
+    final baseUrl = await getBaseUrl();
     final token = await getToken();
     final response = await http.post(
       Uri.parse('$baseUrl/topics/$topicId/comments'),

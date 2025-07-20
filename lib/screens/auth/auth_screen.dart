@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
 import '../onboarding/welcome_screen.dart';
@@ -19,6 +18,9 @@ class AuthScreenState extends State<AuthScreen> {
   String _email = '';
   String _username = '';
   String _password = '';
+
+  final TextEditingController passwordController = TextEditingController();
+  final TextEditingController confirmPasswordController = TextEditingController();
 
   void _submit() {
     final isValid = _formKey.currentState!.validate();
@@ -46,9 +48,62 @@ class AuthScreenState extends State<AuthScreen> {
     });
   }
 
+  void _showApiUrlDialog() {
+    final controller = TextEditingController();
+    _apiService.getBaseUrl().then((value) => controller.text = value);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Set API Base URL'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(hintText: 'http://localhost:8080'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              try {
+                await _apiService.setBaseUrl(controller.text);
+                if (mounted) {
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('API URL updated successfully!')),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error: $e')),
+                  );
+                }
+              }
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: Text('Authentication'),
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings_ethernet),
+            onPressed: _showApiUrlDialog,
+            tooltip: 'Set API URL',
+          ),
+        ],
+      ),
       body: Center(
         child: SingleChildScrollView(
           padding: EdgeInsets.all(24.0),

@@ -2,8 +2,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:kindling/screens/screen_manager/screen_manager.dart';
 import 'package:kindling/services/api_service.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:provider/provider.dart';
-import 'package:qr_code_scanner/qr_code_scanner.dart';
 
 import '../../providers/topic_provider.dart';
 
@@ -17,33 +17,21 @@ class JoinSpaceScreen extends StatefulWidget {
 class _JoinSpaceScreenState extends State<JoinSpaceScreen> {
   final ApiService _apiService = ApiService();
   final TextEditingController _secretController = TextEditingController();
-  final GlobalKey _qrKey = GlobalKey(debugLabel: 'QR');
-  QRViewController? _qrViewController;
   bool _isScanning = false;
 
-  @override
-  void reassemble() {
-    super.reassemble();
-    if (Platform.isAndroid) {
-      _qrViewController?.pauseCamera();
-    }
-    _qrViewController?.resumeCamera();
-  }
-
-  void _onQRViewCreated(QRViewController controller) {
-    setState(() {
-      _qrViewController = controller;
-    });
-    controller.scannedDataStream.listen((scanData) async {
-      controller.pauseCamera();
-      _secretController.text = scanData.code ?? '';
-      await _joinSpace();
-      if (mounted) {
-        setState(() {
-          _isScanning = false;
-        });
+  void _handleBarcode(BarcodeCapture barcodes) async {
+    if (mounted && barcodes.barcodes.isNotEmpty) {
+      final barcode = barcodes.barcodes.first;
+      if (barcode.rawValue != null) {
+        _secretController.text = barcode.rawValue!;
+        await _joinSpace();
+        if (mounted) {
+          setState(() {
+            _isScanning = false;
+          });
+        }
       }
-    });
+    }
   }
 
   Future<void> _joinSpace() async {
@@ -77,16 +65,8 @@ class _JoinSpaceScreenState extends State<JoinSpaceScreen> {
               children: <Widget>[
                 Expanded(
                   flex: 5,
-                  child: QRView(
-                    key: _qrKey,
-                    onQRViewCreated: _onQRViewCreated,
-                    overlay: QrScannerOverlayShape(
-                      borderColor: Theme.of(context).primaryColor,
-                      borderRadius: 10,
-                      borderLength: 30,
-                      borderWidth: 10,
-                      cutOutSize: 300,
-                    ),
+                  child: MobileScanner(
+                    onDetect: _handleBarcode,
                   ),
                 ),
                 Expanded(
@@ -133,7 +113,6 @@ class _JoinSpaceScreenState extends State<JoinSpaceScreen> {
 
   @override
   void dispose() {
-    _qrViewController?.dispose();
     _secretController.dispose();
     super.dispose();
   }
