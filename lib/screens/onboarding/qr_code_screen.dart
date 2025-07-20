@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -16,14 +15,28 @@ class QrCodeScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            QrImageView(
-              data: qrCodeSecret,
-              version: QrVersions.auto,
-              size: 200.0,
+            const Text(
+              'Scan this QR code with your partner\'s device to join the space.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 16),
             ),
-            SizedBox(height: 20),
-            Text('Share this code with your partner to connect.'),
-            SizedBox(height: 10),
+            const SizedBox(height: 30),
+            Container(
+              color: Colors.white,
+              padding: const EdgeInsets.all(20),
+              child: QrImageView(
+                data: qrCodeSecret,
+                version: QrVersions.auto,
+                size: 250.0,
+              ),
+            ),
+            const SizedBox(height: 30),
+            const Text(
+              'Or share this code manually:',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 16),
+            ),
+            const SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -39,12 +52,12 @@ class QrCodeScreen extends StatelessWidget {
                 ),
               ],
             ),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             Tooltip(
               message: 'Your partner can join at any time.',
               child: Icon(Icons.info_outline),
             ),
-            SizedBox(height: 40),
+            const SizedBox(height: 40),
             ElevatedButton(
               onPressed: () {
                 Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => ScreenManager()));
