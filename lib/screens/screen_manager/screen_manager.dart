@@ -23,7 +23,7 @@ class _ScreenManagerState extends State<ScreenManager> {
     NavigationDestination(
       icon: Icon(Icons.archive_outlined),
       selectedIcon: Icon(Icons.archive),
-      label: 'Archive',
+      label: 'Archives',
     ),
     NavigationDestination(
       icon: Icon(Icons.topic_outlined),
@@ -41,7 +41,7 @@ class _ScreenManagerState extends State<ScreenManager> {
     NavigationRailDestination(
       icon: Icon(Icons.archive_outlined),
       selectedIcon: Icon(Icons.archive),
-      label: Text('Archive'),
+      label: Text('Archives'),
     ),
     NavigationRailDestination(
       icon: Icon(Icons.topic_outlined),
