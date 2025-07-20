@@ -20,6 +20,9 @@ class _TopicsScreenState extends State<TopicsScreen> {
   @override
   void initState() {
     super.initState();
+    Future.microtask(() {
+      Provider.of<TopicProvider>(context, listen: false).fetchTopics();
+    });
     _searchController.addListener(() {
       setState(() {});
     });
