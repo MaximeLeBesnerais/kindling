@@ -7,21 +7,25 @@ class ThemeManager with ChangeNotifier {
   ThemeData _lightTheme;
   ThemeData _darkTheme;
   ThemeMode _themeMode;
+  bool _useColorGrading;
 
   ThemeManager(this.prefs)
       : _lightTheme = ThemeData(useMaterial3: true),
         _darkTheme = ThemeData.dark(useMaterial3: true),
-        _themeMode = ThemeMode.system {
+        _themeMode = ThemeMode.system,
+        _useColorGrading = true {
     loadTheme();
   }
 
   ThemeData get lightTheme => _lightTheme;
   ThemeData get darkTheme => _darkTheme;
   ThemeMode get themeMode => _themeMode;
+  bool get useColorGrading => _useColorGrading;
 
   void loadTheme() {
     final colorName = prefs.getString('theme_color');
     final themeModeName = prefs.getString('theme_mode');
+    _useColorGrading = prefs.getBool('use_color_grading') ?? true;
 
     final themeColor = _getColor(colorName);
     _themeMode = _getThemeMode(themeModeName);
@@ -62,6 +66,35 @@ class ThemeManager with ChangeNotifier {
     _themeMode = mode;
     prefs.setString('theme_mode', mode.toString().split('.').last);
     notifyListeners();
+  }
+
+  Future<void> setColorGrading(bool enabled) async {
+    _useColorGrading = enabled;
+    await prefs.setBool('use_color_grading', enabled);
+    notifyListeners();
+  }
+
+  Color? getTopicColor(BuildContext context, int importanceLevel) {
+    if (!_useColorGrading) {
+      return null; // Return null to use the default Card color
+    }
+
+    final theme = Theme.of(context);
+    final primaryColor = theme.colorScheme.primary;
+    final isDarkMode = theme.brightness == Brightness.dark;
+
+    // Define the start and end colors for the gradient
+    final startColor = isDarkMode
+        ? HSLColor.fromColor(primaryColor).withLightness(0.2).toColor()
+        : HSLColor.fromColor(primaryColor).withLightness(0.95).toColor();
+    final endColor = isDarkMode
+        ? HSLColor.fromColor(primaryColor).withLightness(0.4).toColor()
+        : HSLColor.fromColor(primaryColor).withLightness(0.6).toColor();
+
+    // Calculate the interpolation factor (0.0 for importance 1, 1.0 for importance 10)
+    final t = (importanceLevel - 1) / 9.0;
+
+    return Color.lerp(startColor, endColor, t.clamp(0.0, 1.0));
   }
 
   Color _getColor(String? colorName) {

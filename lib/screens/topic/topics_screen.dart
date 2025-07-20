@@ -3,6 +3,7 @@ import 'package:kindling/models/topic.dart';
 import 'package:kindling/providers/topic_provider.dart';
 import 'package:kindling/screens/topic/create_topic_screen.dart';
 import 'package:kindling/screens/topic/topic_detail_screen.dart';
+import 'package:kindling/theme/theme_manager.dart';
 import 'package:provider/provider.dart';
 
 class TopicsScreen extends StatefulWidget {
@@ -132,18 +133,31 @@ class _TopicsScreenState extends State<TopicsScreen> {
                           itemCount: filteredTopics.length,
                           itemBuilder: (context, index) {
                             final topic = filteredTopics[index];
+                            final themeManager = Provider.of<ThemeManager>(context, listen: false);
+                            final cardColor = themeManager.getTopicColor(context, topic.importanceLevel);
+                            final textColor = cardColor != null && Theme.of(context).brightness == Brightness.light
+                                ? (HSLColor.fromColor(cardColor).lightness < 0.7 ? Colors.white : Colors.black)
+                                : null;
+
                             return Card(
+                              color: cardColor,
                               elevation: 2.0,
                               margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
                               child: ListTile(
                                 contentPadding: const EdgeInsets.all(16.0),
                                 title: Text(
                                   topic.encryptedContent,
-                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: textColor,
+                                  ),
                                 ),
                                 subtitle: Padding(
                                   padding: const EdgeInsets.only(top: 8.0),
-                                  child: Text('Importance: ${topic.importanceLevel}'),
+                                  child: Text(
+                                    'Importance: ${topic.importanceLevel}',
+                                    style: TextStyle(color: textColor?.withOpacity(0.7)),
+                                  ),
                                 ),
                                 onTap: () {
                                   Navigator.of(context).push(

@@ -262,6 +262,19 @@ class SettingsScreenState extends State<SettingsScreen> {
                   Text('Mode', style: Theme.of(context).textTheme.titleMedium),
                   SizedBox(height: 10),
                   _buildThemeModeSelector(context, themeManager),
+                  SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Use Color Grading', style: Theme.of(context).textTheme.titleMedium),
+                      Switch(
+                        value: themeManager.useColorGrading,
+                        onChanged: (value) {
+                          themeManager.setColorGrading(value);
+                        },
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
