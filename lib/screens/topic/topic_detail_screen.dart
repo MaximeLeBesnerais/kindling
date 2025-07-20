@@ -271,6 +271,7 @@ class TopicDetailScreenState extends State<TopicDetailScreen> {
             Padding(
               padding: const EdgeInsets.fromLTRB(8.0, 8.0, 8.0, 24.0),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
                     child: TextField(
@@ -285,12 +286,19 @@ class TopicDetailScreenState extends State<TopicDetailScreen> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  _isSending
-                      ? const CircularProgressIndicator()
-                      : IconButton(
-                          icon: const Icon(Icons.send),
-                          onPressed: _canPostComment ? _postComment : null,
-                        ),
+                  if (_isSending)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 12.0),
+                      child: CircularProgressIndicator(),
+                    )
+                  else
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4.0),
+                      child: IconButton(
+                        icon: const Icon(Icons.send),
+                        onPressed: _canPostComment ? _postComment : null,
+                      ),
+                    ),
                 ],
               ),
             ),
