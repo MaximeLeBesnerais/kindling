@@ -30,18 +30,31 @@ class SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _loadUserData() async {
     final prefs = await SharedPreferences.getInstance();
+    // Use the correct keys for SharedPreferences
     setState(() {
-      _email = prefs.getString('email') ?? '';
-      _username = prefs.getString('username') ?? '';
+      _email = prefs.getString('user_email') ?? 'Loading...';
+      _username = prefs.getString('user_username') ?? 'Loading...';
     });
+
     try {
+      // The getUser method returns the user map directly
       final userData = await _apiService.getUser();
-      setState(() {
-        _email = userData['user']['email'];
-        _username = userData['user']['username'];
-      });
+      if (mounted) {
+        setState(() {
+          _email = userData['email'];
+          _username = userData['username'];
+        });
+      }
     } catch (e) {
-      // Handle error
+      if (mounted) {
+        setState(() {
+          _email = 'Failed to load';
+          _username = 'Failed to load';
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to refresh user data: $e')),
+        );
+      }
     }
   }
 
@@ -180,6 +193,13 @@ class SettingsScreenState extends State<SettingsScreen> {
       appBar: AppBar(
         title: Text('Settings'),
         automaticallyImplyLeading: false,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _loadUserData,
+            tooltip: 'Refresh User Data',
+          ),
+        ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(16.0),

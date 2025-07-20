@@ -1,6 +1,5 @@
 class Topic {
   final int id;
-  final int spaceId;
   final int authorId;
   final String encryptedContent;
   final String status;
@@ -10,7 +9,6 @@ class Topic {
 
   Topic({
     required this.id,
-    required this.spaceId,
     required this.authorId,
     required this.encryptedContent,
     required this.status,
@@ -22,7 +20,6 @@ class Topic {
   factory Topic.fromJson(Map<String, dynamic> json) {
     return Topic(
       id: json['ID'],
-      spaceId: json['SpaceID'],
       authorId: json['AuthorID'],
       encryptedContent: json['EncryptedContent'],
       status: json['Status'],
