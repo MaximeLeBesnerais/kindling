@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:kindling/models/comment.dart';
 import 'package:kindling/models/topic.dart';
+import 'package:kindling/providers/topic_provider.dart';
 import 'package:kindling/services/api_service.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class TopicDetailScreen extends StatefulWidget {
@@ -80,11 +82,59 @@ class TopicDetailScreenState extends State<TopicDetailScreen> {
     }
   }
 
+  Future<void> _solveTopic() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Mark as Solved?'),
+        content: const Text('Are you sure you want to mark this topic as solved? This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Confirm'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      try {
+        await _apiService.solveTopic(widget.topic.id);
+        if (mounted) {
+          // Refresh the topics list in the provider
+          await Provider.of<TopicProvider>(context, listen: false).fetchTopics(force: true);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Topic marked as solved.')),
+          );
+          Navigator.of(context).pop(); // Go back to the previous screen
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to solve topic: $e')),
+          );
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.topic.encryptedContent, overflow: TextOverflow.ellipsis),
+        actions: [
+          if (widget.topic.status == 'active')
+            IconButton(
+              icon: const Icon(Icons.check_circle_outline),
+              tooltip: 'Mark as Solved',
+              onPressed: _solveTopic,
+            ),
+        ],
       ),
       body: Column(
         children: [

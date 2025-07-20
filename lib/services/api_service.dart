@@ -99,6 +99,7 @@ class ApiService {
 
     if (response.statusCode == 200) {
       final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('space_secret', secret);
       await prefs.setBool('is_in_space', true);
       return jsonDecode(response.body);
     } else {
@@ -245,7 +246,7 @@ class ApiService {
     }
   }
 
-  Future<Map<String, dynamic>> getTopic(String id) async {
+  Future<Map<String, dynamic>> getTopic(int id) async {
     final baseUrl = await getBaseUrl();
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('api_token');
@@ -289,7 +290,7 @@ class ApiService {
     }
   }
 
-  Future<List<dynamic>> getComments(String topicId) async {
+  Future<List<dynamic>> getComments(int topicId) async {
     final baseUrl = await getBaseUrl();
     final token = await getToken();
     final response = await http.get(
@@ -304,7 +305,7 @@ class ApiService {
     }
   }
 
-  Future<Map<String, dynamic>> createComment(String topicId, String content) async {
+  Future<Map<String, dynamic>> createComment(int topicId, String content) async {
     final baseUrl = await getBaseUrl();
     final token = await getToken();
     final response = await http.post(
@@ -322,6 +323,25 @@ class ApiService {
       return jsonDecode(response.body);
     } else {
       throw Exception('Failed to create comment: ${response.body}');
+    }
+  }
+
+  Future<void> solveTopic(int topicId) async {
+    final baseUrl = await getBaseUrl();
+    final token = await getToken();
+    final response = await http.patch(
+      Uri.parse('$baseUrl/topics/$topicId'),
+      headers: {
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(<String, String>{
+        'status': 'resolved',
+      }),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to solve topic: ${response.body}');
     }
   }
 

@@ -7,12 +7,20 @@ import 'package:provider/provider.dart';
 class TopicsScreen extends StatelessWidget {
   const TopicsScreen({super.key});
 
+  Future<void> _refreshTopics(BuildContext context) async {
+    await Provider.of<TopicProvider>(context, listen: false).fetchTopics(force: true);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Topics'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () => _refreshTopics(context),
+          ),
           IconButton(
             icon: const Icon(Icons.add),
             onPressed: () {
@@ -25,19 +33,19 @@ class TopicsScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: Consumer<TopicProvider>(
-        builder: (context, provider, child) {
-          if (provider.status == TopicStatus.loading && provider.allTopics.isEmpty) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (provider.status == TopicStatus.error) {
-            return Center(child: Text(provider.errorMessage ?? 'An error occurred'));
-          } else if (provider.activeTopics.isEmpty) {
-            return const Center(child: Text('No active topics.'));
-          }
+      body: RefreshIndicator(
+        onRefresh: () => _refreshTopics(context),
+        child: Consumer<TopicProvider>(
+          builder: (context, provider, child) {
+            if (provider.status == TopicStatus.loading && provider.allTopics.isEmpty) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (provider.status == TopicStatus.error) {
+              return Center(child: Text(provider.errorMessage ?? 'An error occurred'));
+            } else if (provider.activeTopics.isEmpty) {
+              return const Center(child: Text('No active topics.'));
+            }
 
-          return RefreshIndicator(
-            onRefresh: () => provider.fetchTopics(force: true),
-            child: ListView.builder(
+            return ListView.builder(
               padding: const EdgeInsets.all(8.0),
               itemCount: provider.activeTopics.length,
               itemBuilder: (context, index) {
@@ -65,9 +73,9 @@ class TopicsScreen extends StatelessWidget {
                   ),
                 );
               },
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }

@@ -1,7 +1,7 @@
 class Topic {
-  final String id;
-  final String spaceId;
-  final String authorId;
+  final int id;
+  final int spaceId;
+  final int authorId;
   final String encryptedContent;
   final String status;
   final int importanceLevel;
@@ -21,9 +21,9 @@ class Topic {
 
   factory Topic.fromJson(Map<String, dynamic> json) {
     return Topic(
-      id: json['ID'].toString(),
-      spaceId: json['SpaceID'].toString(),
-      authorId: json['AuthorID'].toString(),
+      id: json['ID'],
+      spaceId: json['SpaceID'],
+      authorId: json['AuthorID'],
       encryptedContent: json['EncryptedContent'],
       status: json['Status'],
       importanceLevel: json['ImportanceLevel'],
