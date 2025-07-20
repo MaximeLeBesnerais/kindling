@@ -19,8 +19,19 @@ class AuthScreenState extends State<AuthScreen> {
   String _username = '';
   String _password = '';
 
+  final TextEditingController _emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController confirmPasswordController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _emailController.addListener(() {
+      setState(() {
+        _email = _emailController.text;
+      });
+    });
+  }
 
   void _submit() {
     final isValid = _formKey.currentState!.validate();
@@ -128,6 +139,7 @@ class AuthScreenState extends State<AuthScreen> {
                       ),
                     TextFormField(
                       key: ValueKey('email'),
+                      controller: _emailController,
                       decoration: InputDecoration(labelText: 'Email'),
                       validator: (value) => !value!.contains('@') ? 'Please enter a valid email' : null,
                       onSaved: (value) => _email = value!,
