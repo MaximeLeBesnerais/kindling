@@ -125,7 +125,8 @@ class ApiService {
     );
 
     if (response.statusCode == 200) {
-      inSpace = jsonDecode(response.body) as bool;
+      final data = jsonDecode(response.body);
+      inSpace = data['in_space'] as bool;
       await prefs.setBool('is_in_space', inSpace);
       return inSpace;
     } else {
