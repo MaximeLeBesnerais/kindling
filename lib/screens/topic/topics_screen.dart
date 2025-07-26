@@ -21,7 +21,9 @@ class _TopicsScreenState extends State<TopicsScreen> {
   void initState() {
     super.initState();
     Future.microtask(() {
-      Provider.of<TopicProvider>(context, listen: false).fetchTopics();
+      if (mounted) {
+        Provider.of<TopicProvider>(context, listen: false).fetchTopics();
+      }
     });
     _searchController.addListener(() {
       setState(() {});
@@ -159,7 +161,7 @@ class _TopicsScreenState extends State<TopicsScreen> {
                                   padding: const EdgeInsets.only(top: 8.0),
                                   child: Text(
                                     'Importance: ${topic.importanceLevel}',
-                                    style: TextStyle(color: textColor?.withOpacity(0.7)),
+                                    style: TextStyle(color: textColor?.withValues(alpha: (0.7 * 255))),
                                   ),
                                 ),
                                 onTap: () {

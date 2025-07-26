@@ -6,7 +6,7 @@ import 'space_choice_screen.dart';
 class WelcomeScreen extends StatelessWidget {
   final String username;
 
-  const WelcomeScreen({required this.username});
+  const WelcomeScreen({super.key, required this.username});
 
   @override
   Widget build(BuildContext context) {

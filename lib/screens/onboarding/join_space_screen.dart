@@ -11,10 +11,10 @@ class JoinSpaceScreen extends StatefulWidget {
   const JoinSpaceScreen({super.key});
 
   @override
-  _JoinSpaceScreenState createState() => _JoinSpaceScreenState();
+  JoinSpaceScreenState createState() => JoinSpaceScreenState();
 }
 
-class _JoinSpaceScreenState extends State<JoinSpaceScreen> {
+class JoinSpaceScreenState extends State<JoinSpaceScreen> {
   final ApiService _apiService = ApiService();
   final TextEditingController _secretController = TextEditingController();
   bool _isScanning = false;
@@ -39,17 +39,22 @@ class _JoinSpaceScreenState extends State<JoinSpaceScreen> {
     try {
       await _apiService.joinSpace(_secretController.text);
       if (mounted) {
-        await Provider.of<TopicProvider>(context, listen: false).fetchTopics(force: true);
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => const ScreenManager()),
-          (route) => false,
-        );
+        await Provider.of<TopicProvider>(
+          context,
+          listen: false,
+        ).fetchTopics(force: true);
+        if (mounted) {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => const ScreenManager()),
+            (route) => false,
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to join space: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to join space: $e')));
       }
     }
   }
@@ -65,9 +70,7 @@ class _JoinSpaceScreenState extends State<JoinSpaceScreen> {
               children: <Widget>[
                 Expanded(
                   flex: 5,
-                  child: MobileScanner(
-                    onDetect: _handleBarcode,
-                  ),
+                  child: MobileScanner(onDetect: _handleBarcode),
                 ),
                 Expanded(
                   flex: 1,
@@ -77,7 +80,7 @@ class _JoinSpaceScreenState extends State<JoinSpaceScreen> {
                       child: const Text('Cancel'),
                     ),
                   ),
-                )
+                ),
               ],
             )
           : Padding(

@@ -86,14 +86,14 @@ class SettingsScreenState extends State<SettingsScreen> {
             onPressed: () async {
               try {
                 await _apiService.setBaseUrl(controller.text);
-                if (mounted) {
+                if (context.mounted) {
                   Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('API URL updated successfully!')),
                   );
                 }
               } catch (e) {
-                if (mounted) {
+                if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('Error: $e')),
                   );
@@ -165,15 +165,21 @@ class SettingsScreenState extends State<SettingsScreen> {
                 if (newPartnerName.isNotEmpty) {
                   try {
                     await _apiService.setPartnerName(newPartnerName); // Corrected to use local storage
-                    Navigator.of(context).pop();
+                    if (context.mounted) {
+                      Navigator.of(context).pop();
+                    }
                     _loadPartnerName();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Partner name updated successfully')),
-                    );
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Partner name updated successfully')),
+                      );
+                    }
                   } catch (e) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Failed to update partner name: $e')),
-                    );
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Failed to update partner name: $e')),
+                      );
+                    }
                   }
                 }
               },
@@ -320,15 +326,15 @@ class SettingsScreenState extends State<SettingsScreen> {
                 if (shouldQuit == true) {
                   try {
                     await _apiService.quitSpace();
-                    Provider.of<TopicProvider>(context, listen: false).clearTopics();
-                    if (mounted) {
+                    if (context.mounted) {
+                      Provider.of<TopicProvider>(context, listen: false).clearTopics();
                       Navigator.of(context).pushAndRemoveUntil(
                         MaterialPageRoute(builder: (context) => SpaceChoiceScreen()),
                         (route) => false,
                       );
                     }
                   } catch (e) {
-                    if (mounted) {
+                    if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text('Failed to quit space: $e')),
                       );
@@ -364,7 +370,7 @@ class SettingsScreenState extends State<SettingsScreen> {
 
             if (shouldLogout == true) {
               await _apiService.logout();
-              if (mounted) {
+              if (context.mounted) {
                 Navigator.of(context).pushAndRemoveUntil(
                   MaterialPageRoute(builder: (context) => const AuthScreen()),
                   (route) => false,
@@ -416,15 +422,19 @@ class SettingsScreenState extends State<SettingsScreen> {
                 if (newUsername.isNotEmpty && password.isNotEmpty) {
                   try {
                     await _apiService.updateUsername(newUsername, password);
-                    Navigator.of(context).pop();
+                    if (context.mounted) {
+                      Navigator.of(context).pop();
                     _loadUserData();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Username updated successfully')),
-                    );
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Username updated successfully')),
+                      );
+                    }
                   } catch (e) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Failed to update username: $e')),
-                    );
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Failed to update username: $e')),
+                      );
+                    }
                   }
                 }
               },
@@ -471,14 +481,18 @@ class SettingsScreenState extends State<SettingsScreen> {
                 if (currentPassword.isNotEmpty && newPassword.isNotEmpty) {
                   try {
                     await _apiService.updatePassword(currentPassword, newPassword);
-                    Navigator.of(context).pop();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Password updated successfully')),
-                    );
+                    if (context.mounted) {
+                      Navigator.of(context).pop();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Password updated successfully')),
+                      );
+                    }
                   } catch (e) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Failed to update password: $e')),
-                    );
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Failed to update password: $e')),
+                      );
+                    }
                   }
                 }
               },
@@ -507,10 +521,10 @@ class SettingsScreenState extends State<SettingsScreen> {
     // A better way to check for selection
     final currentSeedColor = themeManager.lightTheme.colorScheme.primary;
     bool isActuallySelected = false;
-    if (color == Colors.blue && currentSeedColor.value == Colors.blue.value) isActuallySelected = true;
-    if (color == Colors.pink && currentSeedColor.value == Colors.pink.value) isActuallySelected = true;
-    if (color == Colors.green && currentSeedColor.value == Colors.green.value) isActuallySelected = true;
-    if (color == Colors.orange && currentSeedColor.value == Colors.orange.value) isActuallySelected = true;
+    if (color == Colors.blue && currentSeedColor == Colors.blue) isActuallySelected = true;
+    if (color == Colors.pink && currentSeedColor == Colors.pink) isActuallySelected = true;
+    if (color == Colors.green && currentSeedColor == Colors.green) isActuallySelected = true;
+    if (color == Colors.orange && currentSeedColor == Colors.orange) isActuallySelected = true;
 
     final selectedColorName = themeManager.prefs.getString('theme_color');
     isActuallySelected = selectedColorName == _getColorName(color);
@@ -559,6 +573,6 @@ class SettingsScreenState extends State<SettingsScreen> {
 
 extension StringExtension on String {
   String capitalize() {
-    return "${this[0].toUpperCase()}${this.substring(1)}";
+    return "${this[0].toUpperCase()}${substring(1)}";
   }
 }

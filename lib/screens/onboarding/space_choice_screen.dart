@@ -39,6 +39,8 @@ class SpaceChoiceScreenState extends State<SpaceChoiceScreen> {
       await _apiService.joinSpace(_secretController.text);
       if (mounted) {
         await Provider.of<TopicProvider>(context, listen: false).fetchTopics(force: true);
+      }
+      if (mounted) {
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (context) => const ScreenManager()),
           (route) => false,

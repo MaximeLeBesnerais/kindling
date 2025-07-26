@@ -21,7 +21,8 @@ class AuthScreenState extends State<AuthScreen> {
 
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  final TextEditingController confirmPasswordController = TextEditingController();
+  final TextEditingController confirmPasswordController =
+      TextEditingController();
 
   @override
   void initState() {
@@ -44,19 +45,30 @@ class AuthScreenState extends State<AuthScreen> {
         ? _apiService.login(_email, _password)
         : _apiService.register(_email, _username, _password);
 
-    authFuture.then((response) {
-      if (_isLogin) {
-        // For login, go directly to main app
-        Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => ScreenManager()));
-      } else {
-        // For registration, go through onboarding flow
-        Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => WelcomeScreen(username: _username)));
-      }
-    }).catchError((error) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.toString())),
-      );
-    });
+    authFuture
+        .then((response) {
+          if (mounted) {
+            if (_isLogin) {
+              // For login, go directly to main app
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (context) => ScreenManager()),
+              );
+            } else {
+              // For registration, go through onboarding flow
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(
+                  builder: (context) => WelcomeScreen(username: _username),
+                ),
+              );
+            }
+          }
+        })
+        .catchError((error) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(error.toString())));
+        });
   }
 
   void _showApiUrlDialog() {
@@ -80,17 +92,19 @@ class AuthScreenState extends State<AuthScreen> {
             onPressed: () async {
               try {
                 await _apiService.setBaseUrl(controller.text);
-                if (mounted) {
+                if (context.mounted) {
                   Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('API URL updated successfully!')),
+                    const SnackBar(
+                      content: Text('API URL updated successfully!'),
+                    ),
                   );
                 }
               } catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error: $e')),
-                  );
+                if (context.mounted) {
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text('Error: $e')));
                 }
               }
             },
@@ -134,21 +148,26 @@ class AuthScreenState extends State<AuthScreen> {
                       TextFormField(
                         key: ValueKey('username'),
                         decoration: InputDecoration(labelText: 'Username'),
-                        validator: (value) => value!.isEmpty ? 'Please enter a username' : null,
+                        validator: (value) =>
+                            value!.isEmpty ? 'Please enter a username' : null,
                         onSaved: (value) => _username = value!,
                       ),
                     TextFormField(
                       key: ValueKey('email'),
                       controller: _emailController,
                       decoration: InputDecoration(labelText: 'Email'),
-                      validator: (value) => !value!.contains('@') ? 'Please enter a valid email' : null,
+                      validator: (value) => !value!.contains('@')
+                          ? 'Please enter a valid email'
+                          : null,
                       onSaved: (value) => _email = value!,
                     ),
                     TextFormField(
                       key: ValueKey('password'),
                       decoration: InputDecoration(labelText: 'Password'),
                       obscureText: true,
-                      validator: (value) => value!.length < 6 ? 'Password must be at least 6 characters' : null,
+                      validator: (value) => value!.length < 6
+                          ? 'Password must be at least 6 characters'
+                          : null,
                       onSaved: (value) => _password = value!,
                     ),
                     SizedBox(height: 20),
@@ -165,7 +184,9 @@ class AuthScreenState extends State<AuthScreen> {
                     _isLogin = !_isLogin;
                   });
                 },
-                child: Text(_isLogin ? 'Create an account' : 'I already have an account'),
+                child: Text(
+                  _isLogin ? 'Create an account' : 'I already have an account',
+                ),
               ),
             ],
           ),

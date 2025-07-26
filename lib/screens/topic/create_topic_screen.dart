@@ -31,17 +31,20 @@ class CreateTopicScreenState extends State<CreateTopicScreen> {
         );
 
         // Refresh the topics list
-        await Provider.of<TopicProvider>(context, listen: false)
-            .fetchTopics(force: true);
-
+        if (mounted) {
+          await Provider.of<TopicProvider>(
+            context,
+            listen: false,
+          ).fetchTopics(force: true);
+        }
         if (mounted) {
           Navigator.of(context).pop();
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to create topic: $e')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Failed to create topic: $e')));
         }
       } finally {
         if (mounted) {
@@ -56,9 +59,7 @@ class CreateTopicScreenState extends State<CreateTopicScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Create New Topic'),
-      ),
+      appBar: AppBar(title: const Text('Create New Topic')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -80,7 +81,10 @@ class CreateTopicScreenState extends State<CreateTopicScreen> {
                 },
               ),
               const SizedBox(height: 24),
-              Text('Importance: ${_importance.toInt()}', style: Theme.of(context).textTheme.titleMedium),
+              Text(
+                'Importance: ${_importance.toInt()}',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
               Slider(
                 value: _importance,
                 min: 1,

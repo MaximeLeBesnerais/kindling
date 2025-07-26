@@ -33,7 +33,9 @@ class TopicDetailScreenState extends State<TopicDetailScreen> {
 
   void _updateCommentRules(List<Comment> comments) {
     if (_currentUserId == null) return;
-    final userCommentCount = comments.where((c) => c.authorId == _currentUserId).length;
+    final userCommentCount = comments
+        .where((c) => c.authorId == _currentUserId)
+        .length;
     setState(() {
       _canPostComment = userCommentCount < 4;
     });
@@ -62,7 +64,9 @@ class TopicDetailScreenState extends State<TopicDetailScreen> {
       final cachedData = prefs.getString(cacheKey);
       if (cachedData != null) {
         final List<dynamic> commentsJson = jsonDecode(cachedData);
-        final comments = commentsJson.map((data) => Comment.fromJson(data)).toList();
+        final comments = commentsJson
+            .map((data) => Comment.fromJson(data))
+            .toList();
         _updateCommentRules(comments);
         return comments;
       }
@@ -73,14 +77,16 @@ class TopicDetailScreenState extends State<TopicDetailScreen> {
       final commentsData = await _apiService.getComments(widget.topic.id);
       // Save to cache
       await prefs.setString(cacheKey, jsonEncode(commentsData));
-      final comments = commentsData.map((data) => Comment.fromJson(data)).toList();
+      final comments = commentsData
+          .map((data) => Comment.fromJson(data))
+          .toList();
       _updateCommentRules(comments);
       return comments;
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to load comments: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to load comments: $e')));
       }
       return [];
     }
@@ -145,11 +151,15 @@ class TopicDetailScreenState extends State<TopicDetailScreen> {
             context,
             listen: false,
           ).fetchTopics(force: true);
+        }
+        if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Topic marked as solved.')),
           );
-          Navigator.of(context).pop(); // Go back to the previous screen
         }
+        if (mounted) {
+          Navigator.of(context).pop();
+        } // Go back to the previous screen
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(
@@ -164,7 +174,10 @@ class TopicDetailScreenState extends State<TopicDetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.topic.encryptedContent, overflow: TextOverflow.ellipsis),
+        title: Text(
+          widget.topic.encryptedContent,
+          overflow: TextOverflow.ellipsis,
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -209,10 +222,13 @@ class TopicDetailScreenState extends State<TopicDetailScreen> {
               child: FutureBuilder<List<Comment>>(
                 future: _commentsFuture,
                 builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting && snapshot.data == null) {
+                  if (snapshot.connectionState == ConnectionState.waiting &&
+                      snapshot.data == null) {
                     return const Center(child: CircularProgressIndicator());
                   } else if (snapshot.hasError) {
-                    return const Center(child: Text('Failed to load comments.'));
+                    return const Center(
+                      child: Text('Failed to load comments.'),
+                    );
                   } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
                     return const Center(child: Text('No comments yet.'));
                   }
@@ -238,7 +254,9 @@ class TopicDetailScreenState extends State<TopicDetailScreen> {
                         final authorName = isAuthor ? 'You' : _partnerName;
 
                         return Align(
-                          alignment: isAuthor ? Alignment.centerRight : Alignment.centerLeft,
+                          alignment: isAuthor
+                              ? Alignment.centerRight
+                              : Alignment.centerLeft,
                           child: Card(
                             color: isAuthor
                                 ? Theme.of(context).colorScheme.primaryContainer
@@ -252,7 +270,10 @@ class TopicDetailScreenState extends State<TopicDetailScreen> {
                                 children: [
                                   Text(
                                     authorName,
-                                    style: Theme.of(context).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.bold),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .labelSmall
+                                        ?.copyWith(fontWeight: FontWeight.bold),
                                   ),
                                   const SizedBox(height: 4),
                                   Text(comment.encryptedContent),
@@ -279,10 +300,14 @@ class TopicDetailScreenState extends State<TopicDetailScreen> {
                       maxLength: 256,
                       enabled: _canPostComment,
                       decoration: InputDecoration(
-                        hintText: _canPostComment ? 'Add a comment...' : 'You have reached your comment limit.',
+                        hintText: _canPostComment
+                            ? 'Add a comment...'
+                            : 'You have reached your comment limit.',
                         border: const OutlineInputBorder(),
                       ),
-                      onSubmitted: _canPostComment ? (_) => _postComment() : null,
+                      onSubmitted: _canPostComment
+                          ? (_) => _postComment()
+                          : null,
                     ),
                   ),
                   const SizedBox(width: 8),

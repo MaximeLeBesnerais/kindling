@@ -6,7 +6,7 @@ import '../screen_manager/screen_manager.dart';
 class QrCodeScreen extends StatelessWidget {
   final String qrCodeSecret;
 
-  const QrCodeScreen({required this.qrCodeSecret});
+  const QrCodeScreen({super.key, required this.qrCodeSecret});
 
   @override
   Widget build(BuildContext context) {
